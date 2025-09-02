@@ -2,6 +2,7 @@
 namespace Satrack\EmailGatePro\Infrastructure\WordPress\Shortcodes;
 
 use Satrack\EmailGatePro\Support\Config;
+use Satrack\EmailGatePro\Infrastructure\WordPress\Rest\VerificationController;
 
 class FormShortcode
 {
@@ -17,7 +18,7 @@ class FormShortcode
   }
   public function assets(): void
   {
-    wp_register_script('segp-form', plugins_url('assets/js/form.js', dirname(__DIR__, 3) . '/satrack-email-gate-pro.php'), [], null, true);
+    wp_register_script('segp-form', SEGP_PLUGIN_URL . 'assets/js/form.js', [], null, true);
   }
   public function render(): string
   {

@@ -35,22 +35,6 @@ class SettingsPage
       );
     });
 
-    $this->addField('list_id', 'ID de lista', function ($o) {
-      printf(
-        "<input type='text' name='%s[list_id]' value='%s' style='width:200px' />",
-        esc_attr($this->config->key()),
-        esc_attr($o['list_id'] ?? '')
-      );
-    });
-
-    $this->addField('mode', 'Modo de verificación', function ($o) {
-      $v = $o['mode'] ?? 'v1';
-      printf("<select name='%s[mode]'>", esc_attr($this->config->key()));
-      printf("<option value='v1' %s>Contactos v1 (list-memberships)</option>", selected($v, 'v1', false));
-      printf("<option value='v3' %s>Lists v3 (memberships)</option>", selected($v, 'v3', false));
-      echo '</select>';
-    });
-
     $this->addField('cookie_ttl', 'TTL acceso (horas)', function ($o) {
       printf(
         "<input type='number' min='1' name='%s[cookie_ttl]' value='%d' style='width:90px' />",
@@ -98,15 +82,14 @@ class SettingsPage
   private function addField(string $id, string $label, callable $cb): void
   {
     add_settings_field($id, $label, function () use ($cb) {
-      $cb(get_option($this->config->key(), [])); }, $this->config->key(), 'segp_main');
+      $cb(get_option($this->config->key(), []));
+    }, $this->config->key(), 'segp_main');
   }
 
   public function sanitize(array $raw): array
   {
     $clean = [];
     $clean['token'] = trim($raw['token'] ?? '');
-    $clean['list_id'] = preg_replace('/[^0-9]/', '', (string) ($raw['list_id'] ?? ''));
-    $clean['mode'] = in_array(($raw['mode'] ?? 'v1'), ['v1', 'v3'], true) ? $raw['mode'] : 'v1';
     $clean['cookie_ttl'] = max(1, (int) ($raw['cookie_ttl'] ?? 24));
     $clean['gate_page'] = (int) ($raw['gate_page'] ?? 0);
     $clean['rate'] = max(3, (int) ($raw['rate'] ?? 10));
