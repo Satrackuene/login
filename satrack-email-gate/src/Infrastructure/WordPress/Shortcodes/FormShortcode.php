@@ -26,9 +26,13 @@ class FormShortcode
     $nonce = wp_create_nonce('wp_rest');
     $endpoint = esc_url_raw(rest_url(VerificationController::NS . '/verify'));
     $redirect = '';
-    $rid = (int) $this->config->get('redirect_page', 0);
-    if ($rid) {
-      $redirect = get_permalink($rid);
+    if (!empty($_GET['redirect_to'])) {
+      $redirect = esc_url_raw(wp_unslash($_GET['redirect_to']));
+    } else {
+      $rid = (int) $this->config->get('redirect_page', 0);
+      if ($rid) {
+        $redirect = get_permalink($rid);
+      }
     }
     $a = random_int(1, 20);
     $b = random_int(1, 20);
@@ -68,10 +72,11 @@ class FormShortcode
       data-success="<?php echo esc_attr(__('Acceso concedido. Recargando…', SEGP_DOMAIN)); ?>" <?php if ($redirect) { ?>
         data-redirect="<?php echo esc_attr($redirect); ?>" <?php } ?>>
       <label for="segp-email"
-        class="segp-label"><?php _e('Ingresa tu correo corporativo para acceder', SEGP_DOMAIN); ?></label>
-      <input id="segp-email" type="email" required placeholder="tucorreo@empresa.com" class="segp-input" />
+        class="segp-label"><?php _e('Ingresa tu correo inscrito para acceder', SEGP_DOMAIN); ?></label>
+      <input id="segp-email" type="email" required autocomplete="off" placeholder="tucorreo@dominio.com"
+        class="segp-input" />
       <label for="segp-captcha" class="segp-label"><?php echo $question; ?></label>
-      <input id="segp-captcha" type="number" required class="segp-input" />
+      <input id="segp-captcha" type="text" autocomplete="off" required class="segp-input" />
       <input type="hidden" id="segp-a" value="<?php echo esc_attr($a); ?>" />
       <input type="hidden" id="segp-b" value="<?php echo esc_attr($b); ?>" />
       <input type="hidden" id="segp-op" value="<?php echo esc_attr($op); ?>" />

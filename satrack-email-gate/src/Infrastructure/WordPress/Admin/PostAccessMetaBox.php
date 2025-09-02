@@ -65,7 +65,13 @@ class PostAccessMetaBox
     if ($this->canView()) {
       return;
     }
-    $url = wp_login_url(get_permalink($post_id));
+    $opt = get_option('satrack_egp_options', []);
+    $gate = !empty($opt['gate_page']) ? get_permalink((int) $opt['gate_page']) : '';
+    if ($gate) {
+      $url = add_query_arg('redirect_to', rawurlencode(get_permalink($post_id)), $gate);
+    } else {
+      $url = wp_login_url(get_permalink($post_id));
+    }
     wp_redirect($url);
     exit;
   }
