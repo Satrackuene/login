@@ -31,6 +31,12 @@ class VerificationController
   }
   public function verify(WP_REST_Request $req)
   {
+    $a = (int) $req->get_param('a');
+    $b = (int) $req->get_param('b');
+    $captcha = (int) $req->get_param('captcha');
+    if ($captcha !== ($a + $b)) {
+      return new WP_Error('segp_captcha', __('Captcha incorrecto', 'satrack-egp'), ['status' => 403]);
+    }
     $email = $req->get_param('email');
 
     [$ok, $msg, $data] = $this->usecase->handle((string) $email);

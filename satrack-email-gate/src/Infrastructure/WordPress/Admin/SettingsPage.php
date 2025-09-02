@@ -53,6 +53,16 @@ class SettingsPage
       echo '<p class="description">Crea una página con <code>[email_gate_form]</code> y selecciónala aquí para redirigir.</p>';
     });
 
+    $this->addField('redirect_page', 'Página tras login', function ($o) {
+      wp_dropdown_pages([
+        'name' => $this->config->key() . '[redirect_page]',
+        'show_option_none' => '-- Seleccionar --',
+        'option_none_value' => 0,
+        'selected' => (int) ($o['redirect_page'] ?? 0)
+      ]);
+      echo '<p class="description">Se redirige a esta página después de acceder.</p>';
+    });
+
     $this->addField('rate', 'Rate limit (intentos/10 min)', function ($o) {
       printf(
         "<input type='number' min='3' name='%s[rate]' value='%d' style='width:90px' />",
@@ -65,6 +75,15 @@ class SettingsPage
       $v = !empty($o['login_as_visitor']);
       printf(
         "<label><input type='checkbox' name='%s[login_as_visitor]' %s /> Habilitar</label>",
+        esc_attr($this->config->key()),
+        checked($v, true, false)
+      );
+    });
+
+    $this->addField('enable_log', 'Registrar accesos', function ($o) {
+      $v = !empty($o['enable_log']);
+      printf(
+        "<label><input type='checkbox' name='%s[enable_log]' %s /> Activar</label>",
         esc_attr($this->config->key()),
         checked($v, true, false)
       );
@@ -92,8 +111,10 @@ class SettingsPage
     $clean['token'] = trim($raw['token'] ?? '');
     $clean['cookie_ttl'] = max(1, (int) ($raw['cookie_ttl'] ?? 24));
     $clean['gate_page'] = (int) ($raw['gate_page'] ?? 0);
+    $clean['redirect_page'] = (int) ($raw['redirect_page'] ?? 0);
     $clean['rate'] = max(3, (int) ($raw['rate'] ?? 10));
     $clean['login_as_visitor'] = !empty($raw['login_as_visitor']) ? 1 : 0;
+    $clean['enable_log'] = !empty($raw['enable_log']) ? 1 : 0;
     $clean['allowed_domains'] = trim((string) ($raw['allowed_domains'] ?? ''));
     return $clean;
   }

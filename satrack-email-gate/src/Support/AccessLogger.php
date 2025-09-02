@@ -15,9 +15,9 @@ class AccessLogger
     $this->file = $dir . '/access.log';
   }
 
-  public function log(string $email, string $ip, int $hours): void
+  public function log(string $email, string $ip): void
   {
-    $line = sprintf("%s\t%s\t%s\t%d\n", current_time('mysql'), $ip, $email, $hours);
+    $line = sprintf("%s\t%s\t%s\n", current_time('mysql'), $ip, $email);
     file_put_contents($this->file, $line, FILE_APPEND);
   }
 }

@@ -87,7 +87,9 @@ class VerifyEmailAccess
       $this->loginVisitor($email);
     }
 
-    $this->accessLog->log($email, $ip, max(1, $ttl));
+    if ((bool) $this->config->get('enable_log', false)) {
+      $this->accessLog->log($email, $ip);
+    }
     $this->log->info('Access granted', ['email' => $email, 'ip' => $ip, 'session_hours' => max(1, $ttl)]);
 
     return [true, __('Acceso concedido', 'satrack-egp'), $allowed];
