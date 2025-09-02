@@ -2,7 +2,7 @@
 /**
  * Plugin Name:  Satrack Email Gate Pro
  * Description:  Restringe contenido validando la propiedad "access-ctr-forma-clientes" en HubSpot. Opción de inicio de sesión con rol "visitor" sin acceso a /wp-admin.
- * Version:      2.1.2
+ * Version:      2.1.3
  * Author:       Satrack
  * License:      GPLv2 or later
  * Text Domain:  satrack-egp
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
   exit;
 }
 
-define('SEGP_VERSION', '2.1.2');
+define('SEGP_VERSION', '2.1.3');
 define('SEGP_DOMAIN', 'Satrack');
 define('SEGP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SEGP_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -44,6 +44,7 @@ use Satrack\EmailGatePro\Infrastructure\WordPress\Admin\SettingsPage;
 use Satrack\EmailGatePro\Infrastructure\WordPress\Rest\VerificationController;
 use Satrack\EmailGatePro\Infrastructure\WordPress\Shortcodes\FormShortcode;
 use Satrack\EmailGatePro\Infrastructure\WordPress\Shortcodes\ProtectShortcode;
+use Satrack\EmailGatePro\Infrastructure\WordPress\Shortcodes\LogoutUrlShortcode;
 use Satrack\EmailGatePro\Infrastructure\WordPress\Users\VisitorLoginManager;
 use Satrack\EmailGatePro\Infrastructure\WordPress\Admin\PostAccessMetaBox;
 
@@ -103,6 +104,7 @@ add_action('plugins_loaded', function () {
   (new VerificationController($config, $usecase))->register();
   (new FormShortcode($config))->register();
   (new ProtectShortcode())->register();
+  (new LogoutUrlShortcode())->register();
   (new PostAccessMetaBox())->register();
 
   // Reglas del rol visitor (sin admin bar, sin dashboard)

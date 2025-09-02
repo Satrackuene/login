@@ -33,8 +33,22 @@ class VerificationController
   {
     $a = (int) $req->get_param('a');
     $b = (int) $req->get_param('b');
+    $op = $req->get_param('op');
     $captcha = (int) $req->get_param('captcha');
-    if ($captcha !== ($a + $b)) {
+    switch ($op) {
+      case '-':
+        $expected = $a - $b;
+        break;
+      case '*':
+        $expected = $a * $b;
+        break;
+      case '+':
+        $expected = $a + $b;
+        break;
+      default:
+        return new WP_Error('segp_captcha', __('Captcha incorrecto', 'satrack-egp'), ['status' => 403]);
+    }
+    if ($captcha !== $expected) {
       return new WP_Error('segp_captcha', __('Captcha incorrecto', 'satrack-egp'), ['status' => 403]);
     }
     $email = $req->get_param('email');

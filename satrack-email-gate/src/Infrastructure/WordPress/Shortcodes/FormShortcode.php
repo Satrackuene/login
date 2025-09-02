@@ -32,6 +32,25 @@ class FormShortcode
     }
     $a = rand(1, 9);
     $b = rand(1, 9);
+    $ops = ['+', '-', '*'];
+    $op = $ops[array_rand($ops)];
+    if ($op === '-' && $a < $b) {
+      [$a, $b] = [$b, $a];
+    }
+    $words = [
+      1 => __('uno', 'satrack-egp'),
+      2 => __('dos', 'satrack-egp'),
+      3 => __('tres', 'satrack-egp'),
+      4 => __('cuatro', 'satrack-egp'),
+      5 => __('cinco', 'satrack-egp'),
+      6 => __('seis', 'satrack-egp'),
+      7 => __('siete', 'satrack-egp'),
+      8 => __('ocho', 'satrack-egp'),
+      9 => __('nueve', 'satrack-egp')
+    ];
+    $showA = rand(0, 1) ? $a : $words[$a];
+    $showB = rand(0, 1) ? $b : $words[$b];
+    $question = sprintf(__('¿Cuánto es %s %s %s?', 'satrack-egp'), esc_html($showA), esc_html($op), esc_html($showB));
     ob_start(); ?>
     <form id="segp-form" class="segp-form" data-endpoint="<?php echo esc_attr($endpoint); ?>"
       data-nonce="<?php echo esc_attr($nonce); ?>"
@@ -40,11 +59,11 @@ class FormShortcode
       <label for="segp-email"
         class="segp-label"><?php _e('Ingresa tu correo corporativo para acceder', 'satrack-egp'); ?></label>
       <input id="segp-email" type="email" required placeholder="tucorreo@empresa.com" class="segp-input" />
-      <label for="segp-captcha"
-        class="segp-label"><?php printf(__('¿Cuánto es %d + %d?', 'satrack-egp'), $a, $b); ?></label>
+      <label for="segp-captcha" class="segp-label"><?php echo $question; ?></label>
       <input id="segp-captcha" type="number" required class="segp-input" />
       <input type="hidden" id="segp-a" value="<?php echo esc_attr($a); ?>" />
       <input type="hidden" id="segp-b" value="<?php echo esc_attr($b); ?>" />
+      <input type="hidden" id="segp-op" value="<?php echo esc_attr($op); ?>" />
       <button id="segp-btn" class="segp-btn"><?php _e('Acceder', 'satrack-egp'); ?></button>
       <p id="segp-msg" class="segp-msg" role="alert" aria-live="polite"></p>
     </form>

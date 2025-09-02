@@ -7,6 +7,7 @@
 	const captcha = form.querySelector("#segp-captcha");
 	const a = form.querySelector("#segp-a");
 	const b = form.querySelector("#segp-b");
+	const op = form.querySelector("#segp-op");
 	const endpoint = form.dataset.endpoint;
 	const nonce = form.dataset.nonce;
 	form.addEventListener("submit", async function (e) {
@@ -21,6 +22,7 @@
 					email: (email.value || "").trim(),
 					a: a ? parseInt(a.value, 10) : 0,
 					b: b ? parseInt(b.value, 10) : 0,
+					op: op ? op.value : "+",
 					captcha: captcha ? parseInt(captcha.value, 10) : 0,
 				}),
 			});
