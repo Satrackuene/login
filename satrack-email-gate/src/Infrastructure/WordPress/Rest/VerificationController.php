@@ -49,6 +49,9 @@ class VerificationController
       default:
         return new WP_Error('segp_captcha', __('Captcha incorrecto', SEGP_DOMAIN), ['status' => 403]);
     }
+    if ($expected < 0 || $expected > 40) {
+      return new WP_Error('segp_captcha', __('Captcha incorrecto', SEGP_DOMAIN), ['status' => 403]);
+    }
     if ($captcha !== $expected) {
       return new WP_Error('segp_captcha', __('Captcha incorrecto', SEGP_DOMAIN), ['status' => 403]);
     }

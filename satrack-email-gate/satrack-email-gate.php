@@ -2,7 +2,7 @@
 /**
  * Plugin Name:  Satrack Email Gate Pro
  * Description:  Restringe contenido validando la propiedad "access-ctr-forma-clientes" en HubSpot. Opción de inicio de sesión con rol "visitor" sin acceso a /wp-admin.
- * Version:      2.1.3
+ * Version:      2.1.4
  * Author:       Satrack
  * License:      GPLv2 or later
  * Text Domain:  satrack-egp
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
   exit;
 }
 
-define('SEGP_VERSION', '2.1.3');
+define('SEGP_VERSION', '2.1.4');
 define('SEGP_DOMAIN', 'Satrack');
 define('SEGP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SEGP_PLUGIN_URL', plugin_dir_url(__FILE__));

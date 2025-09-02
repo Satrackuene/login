@@ -34,13 +34,25 @@ class FormShortcode
         $redirect = get_permalink($rid);
       }
     }
-    $a = random_int(1, 20);
-    $b = random_int(1, 20);
     $ops = ['+', '-', 'x'];
-    $op = $ops[array_rand($ops)];
-    if ($op === '-' && $a < $b) {
-      [$a, $b] = [$b, $a];
-    }
+    do {
+      $a = random_int(1, 20);
+      $b = random_int(1, 20);
+      $op = $ops[array_rand($ops)];
+      if ($op === '-' && $a < $b) {
+        [$a, $b] = [$b, $a];
+      }
+      switch ($op) {
+        case '-':
+          $expected = $a - $b;
+          break;
+        case 'x':
+          $expected = $a * $b;
+          break;
+        default:
+          $expected = $a + $b;
+      }
+    } while ($expected < 0 || $expected > 40);
     $words = [
       1 => __('uno', SEGP_DOMAIN),
       2 => __('dos', SEGP_DOMAIN),
