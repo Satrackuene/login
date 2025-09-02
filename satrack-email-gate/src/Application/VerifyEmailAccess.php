@@ -4,8 +4,8 @@ namespace Satrack\EmailGatePro\Application;
 use Satrack\EmailGatePro\Support\Config;
 use Satrack\EmailGatePro\Domain\Security\RateLimiter;
 use Satrack\EmailGatePro\Domain\Security\AccessCookieManager;
-use Satrack\EmailGatePro\Infrastructure\HubSpot\HubSpotV1Verifier;
-use Satrack\EmailGatePro\Infrastructure\HubSpot\HubSpotV3Verifier;
+use Satrack\EmailGatePro\Infrastructure\HubSpot\HubSpotPropertyVerifier;
+use Satrack\EmailGatePro\Support\AccessLogger;
 use Satrack\EmailGatePro\Support\LoggerInterface;
 
 class VerifyEmailAccess
@@ -13,17 +13,17 @@ class VerifyEmailAccess
   private Config $config;
   private RateLimiter $rate;
   private AccessCookieManager $cookie;
-  private HubSpotV1Verifier $v1;
-  private HubSpotV3Verifier $v3;
+  private HubSpotPropertyVerifier $verifier;
+  private AccessLogger $accessLog;
   private LoggerInterface $log;
 
-  public function __construct(Config $config, RateLimiter $rate, AccessCookieManager $cookie, HubSpotV1Verifier $v1, HubSpotV3Verifier $v3, LoggerInterface $log)
+  public function __construct(Config $config, RateLimiter $rate, AccessCookieManager $cookie, HubSpotPropertyVerifier $verifier, AccessLogger $accessLog, LoggerInterface $log)
   {
     $this->config = $config;
     $this->rate = $rate;
     $this->cookie = $cookie;
-    $this->v1 = $v1;
-    $this->v3 = $v3;
+    $this->verifier = $verifier;
+    $this->accessLog = $accessLog;
     $this->log = $log;
   }
 
@@ -31,19 +31,17 @@ class VerifyEmailAccess
   {
     $email = sanitize_email($email);
     if (!is_email($email)) {
-      return [false, __('Correo inválido', 'satrack-egp')];
+      return [false, __('Correo inválido', SEGP_DOMAIN)];
     }
 
     $max = (int) ($this->config->get('rate', 10));
     if (!$this->rate->hit(max(3, $max))) {
-      return [false, __('Demasiados intentos, inténtalo más tarde.', 'satrack-egp')];
+      return [false, __('Demasiados intentos, inténtalo más tarde.', SEGP_DOMAIN)];
     }
 
     $token = (string) $this->config->get('token', '');
-    $listId = (string) $this->config->get('list_id', '');
-    $mode = (string) $this->config->get('mode', 'v1');
-    if (!$token || !$listId) {
-      return [false, __('Plugin no configurado.', 'satrack-egp')];
+    if (!$token) {
+      return [false, __('Plugin no configurado.', SEGP_DOMAIN)];
     }
 
     // Filtro opcional por dominios
@@ -58,23 +56,28 @@ class VerifyEmailAccess
         }
       }
       if (!$okDomain) {
-        return [false, __('Dominio de correo no permitido.', 'satrack-egp')];
+        return [false, __('Dominio de correo no permitido.', SEGP_DOMAIN)];
       }
     }
 
-    // Cache 12h por email+modo+lista
-    $cacheKey = 'satrack_egp_allow_' . md5(strtolower($email) . '|' . $listId . '|' . $mode);
+    // Cache 12h por email
+    $cacheKey = 'satrack_egp_allow_' . md5(strtolower($email));
     $cached = get_transient($cacheKey);
     $allowed = ($cached === '1');
 
     if (!$allowed) {
-      $allowed = ($mode === 'v1') ? $this->v1->isAllowed($email, $listId, $token) : $this->v3->isAllowed($email, $listId, $token);
-      if ($allowed)
+      $allowed = $this->verifier->hasAccess($email, $token);
+
+      if ($allowed) {
         set_transient($cacheKey, '1', 12 * HOUR_IN_SECONDS);
+      }
     }
 
-    if (!$allowed)
-      return [false, __('Tu correo no está autorizado para este contenido.', 'satrack-egp')];
+    $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+    if (!$allowed) {
+      $this->log->info('Access denied', ['email' => $email, 'ip' => $ip]);
+      return [false, __('Tu correo no está autorizado para este contenido.', SEGP_DOMAIN), $allowed];
+    }
 
     $ttl = (int) $this->config->get('cookie_ttl', 24);
     $this->cookie->issue($email, max(1, $ttl));
@@ -84,7 +87,12 @@ class VerifyEmailAccess
       $this->loginVisitor($email);
     }
 
-    return [true, __('Acceso concedido', 'satrack-egp')];
+    if ((bool) $this->config->get('enable_log', false)) {
+      $this->accessLog->log($email, $ip);
+    }
+    $this->log->info('Access granted', ['email' => $email, 'ip' => $ip, 'session_hours' => max(1, $ttl)]);
+
+    return [true, __('Acceso concedido', SEGP_DOMAIN), $allowed];
   }
 
   private function loginVisitor(string $email): void

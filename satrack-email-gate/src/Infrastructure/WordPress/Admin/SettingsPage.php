@@ -35,22 +35,6 @@ class SettingsPage
       );
     });
 
-    $this->addField('list_id', 'ID de lista', function ($o) {
-      printf(
-        "<input type='text' name='%s[list_id]' value='%s' style='width:200px' />",
-        esc_attr($this->config->key()),
-        esc_attr($o['list_id'] ?? '')
-      );
-    });
-
-    $this->addField('mode', 'Modo de verificación', function ($o) {
-      $v = $o['mode'] ?? 'v1';
-      printf("<select name='%s[mode]'>", esc_attr($this->config->key()));
-      printf("<option value='v1' %s>Contactos v1 (list-memberships)</option>", selected($v, 'v1', false));
-      printf("<option value='v3' %s>Lists v3 (memberships)</option>", selected($v, 'v3', false));
-      echo '</select>';
-    });
-
     $this->addField('cookie_ttl', 'TTL acceso (horas)', function ($o) {
       printf(
         "<input type='number' min='1' name='%s[cookie_ttl]' value='%d' style='width:90px' />",
@@ -67,6 +51,16 @@ class SettingsPage
         'selected' => (int) ($o['gate_page'] ?? 0)
       ]);
       echo '<p class="description">Crea una página con <code>[email_gate_form]</code> y selecciónala aquí para redirigir.</p>';
+    });
+
+    $this->addField('redirect_page', 'Página tras login', function ($o) {
+      wp_dropdown_pages([
+        'name' => $this->config->key() . '[redirect_page]',
+        'show_option_none' => '-- Seleccionar --',
+        'option_none_value' => 0,
+        'selected' => (int) ($o['redirect_page'] ?? 0)
+      ]);
+      echo '<p class="description">Se redirige a esta página después de acceder.</p>';
     });
 
     $this->addField('rate', 'Rate limit (intentos/10 min)', function ($o) {
@@ -86,6 +80,15 @@ class SettingsPage
       );
     });
 
+    $this->addField('enable_log', 'Registrar accesos', function ($o) {
+      $v = !empty($o['enable_log']);
+      printf(
+        "<label><input type='checkbox' name='%s[enable_log]' %s /> Activar</label>",
+        esc_attr($this->config->key()),
+        checked($v, true, false)
+      );
+    });
+
     $this->addField('allowed_domains', 'Dominios permitidos (coma)', function ($o) {
       printf(
         "<input type='text' name='%s[allowed_domains]' value='%s' style='width:420px' placeholder='empresa.com, aliado.com' />",
@@ -98,19 +101,20 @@ class SettingsPage
   private function addField(string $id, string $label, callable $cb): void
   {
     add_settings_field($id, $label, function () use ($cb) {
-      $cb(get_option($this->config->key(), [])); }, $this->config->key(), 'segp_main');
+      $cb(get_option($this->config->key(), []));
+    }, $this->config->key(), 'segp_main');
   }
 
   public function sanitize(array $raw): array
   {
     $clean = [];
     $clean['token'] = trim($raw['token'] ?? '');
-    $clean['list_id'] = preg_replace('/[^0-9]/', '', (string) ($raw['list_id'] ?? ''));
-    $clean['mode'] = in_array(($raw['mode'] ?? 'v1'), ['v1', 'v3'], true) ? $raw['mode'] : 'v1';
     $clean['cookie_ttl'] = max(1, (int) ($raw['cookie_ttl'] ?? 24));
     $clean['gate_page'] = (int) ($raw['gate_page'] ?? 0);
+    $clean['redirect_page'] = (int) ($raw['redirect_page'] ?? 0);
     $clean['rate'] = max(3, (int) ($raw['rate'] ?? 10));
     $clean['login_as_visitor'] = !empty($raw['login_as_visitor']) ? 1 : 0;
+    $clean['enable_log'] = !empty($raw['enable_log']) ? 1 : 0;
     $clean['allowed_domains'] = trim((string) ($raw['allowed_domains'] ?? ''));
     return $clean;
   }

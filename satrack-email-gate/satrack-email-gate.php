@@ -1,16 +1,22 @@
 <?php
 /**
  * Plugin Name:  Satrack Email Gate Pro
- * Description:  Restringe contenido por email validado en HubSpot. Opción de inicio de sesión con rol "visitor" sin acceso a /wp-admin.
- * Version:      2.0.0
+ * Description:  Restringe contenido validando la propiedad "access-ctr-forma-clientes" en HubSpot. Opción de inicio de sesión con rol "visitor" sin acceso a /wp-admin.
+ * Version:      2.1.4
  * Author:       Satrack
  * License:      GPLv2 or later
  * Text Domain:  satrack-egp
  */
 
+
 if (!defined('ABSPATH')) {
   exit;
 }
+
+define('SEGP_VERSION', '2.1.4');
+define('SEGP_DOMAIN', 'Satrack');
+define('SEGP_PLUGIN_DIR', plugin_dir_path(__FILE__));
+define('SEGP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
 // --- PSR-4 Autoloader simple ---
 spl_autoload_register(function ($class) {
@@ -31,14 +37,16 @@ use Satrack\EmailGatePro\Support\WpLogger;
 use Satrack\EmailGatePro\Domain\Security\TokenSigner;
 use Satrack\EmailGatePro\Domain\Security\RateLimiter;
 use Satrack\EmailGatePro\Domain\Security\AccessCookieManager;
-use Satrack\EmailGatePro\Infrastructure\HubSpot\HubSpotV1Verifier;
-use Satrack\EmailGatePro\Infrastructure\HubSpot\HubSpotV3Verifier;
+use Satrack\EmailGatePro\Infrastructure\HubSpot\HubSpotPropertyVerifier;
+use Satrack\EmailGatePro\Support\AccessLogger;
 use Satrack\EmailGatePro\Application\VerifyEmailAccess;
 use Satrack\EmailGatePro\Infrastructure\WordPress\Admin\SettingsPage;
 use Satrack\EmailGatePro\Infrastructure\WordPress\Rest\VerificationController;
 use Satrack\EmailGatePro\Infrastructure\WordPress\Shortcodes\FormShortcode;
 use Satrack\EmailGatePro\Infrastructure\WordPress\Shortcodes\ProtectShortcode;
+use Satrack\EmailGatePro\Infrastructure\WordPress\Shortcodes\LogoutUrlShortcode;
 use Satrack\EmailGatePro\Infrastructure\WordPress\Users\VisitorLoginManager;
+use Satrack\EmailGatePro\Infrastructure\WordPress\Admin\PostAccessMetaBox;
 
 // --- Activación / Desactivación ---
 register_activation_hook(__FILE__, function () {
@@ -80,16 +88,16 @@ add_action('plugins_loaded', function () {
   $c->set(WpLogger::class, $log);
   $c->set(TokenSigner::class, $signer);
   $c->set(AccessCookieManager::class, $cookie);
+  add_action('wp_logout', [$cookie, 'clear']);
   $c->set(RateLimiter::class, $rate);
 
-  // Verificadores HubSpot (inyectables por modo)
-  $v1 = new HubSpotV1Verifier($http, $log);
-  $v3 = new HubSpotV3Verifier($http, $log);
-  $c->set(HubSpotV1Verifier::class, $v1);
-  $c->set(HubSpotV3Verifier::class, $v3);
+  $accessLog = new AccessLogger();
+  $c->set(AccessLogger::class, $accessLog);
 
+  $verifier = new HubSpotPropertyVerifier($http, $log);
+  $c->set(HubSpotPropertyVerifier::class, $verifier);
   // Caso de uso
-  $usecase = new VerifyEmailAccess($config, $rate, $cookie, $v1, $v3, $log);
+  $usecase = new VerifyEmailAccess($config, $rate, $cookie, $verifier, $accessLog, $log);
   $c->set(VerifyEmailAccess::class, $usecase);
 
   // WordPress: UI + REST + Shortcodes + Visitante
@@ -97,6 +105,8 @@ add_action('plugins_loaded', function () {
   (new VerificationController($config, $usecase))->register();
   (new FormShortcode($config))->register();
   (new ProtectShortcode())->register();
+  (new LogoutUrlShortcode())->register();
+  (new PostAccessMetaBox())->register();
 
   // Reglas del rol visitor (sin admin bar, sin dashboard)
   (new VisitorLoginManager($config))->registerGuards();

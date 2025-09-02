@@ -23,6 +23,18 @@ class AccessCookieManager
       'samesite' => 'Lax'
     ]);
   }
+
+  public function clear(): void
+  {
+    setcookie($this->cookieName, '', [
+      'expires' => time() - HOUR_IN_SECONDS,
+      'path' => '/',
+      'secure' => is_ssl(),
+      'httponly' => true,
+      'samesite' => 'Lax'
+    ]);
+    unset($_COOKIE[$this->cookieName]);
+  }
   public function valid(): bool
   {
     if (empty($_COOKIE[$this->cookieName]))
