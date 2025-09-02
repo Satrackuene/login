@@ -16,8 +16,8 @@ class ProtectShortcode
     }
     $opt = get_option('satrack_egp_options', []);
     $url = !empty($opt['gate_page']) ? get_permalink((int) $opt['gate_page']) : '';
-    $cta = $url ? ' <a href="' . esc_url($url) . '">' . esc_html__('Ir al formulario de acceso', 'satrack-egp') . '</a>' : '';
-    return '<div class="segp-locked">' . esc_html__('Contenido restringido.', 'satrack-egp') . $cta . '</div>';
+    $cta = $url ? ' <a href="' . esc_url($url) . '">' . esc_html__('Ir al formulario de acceso', SEGP_DOMAIN) . '</a>' : '';
+    return '<div class="segp-locked">' . esc_html__('Contenido restringido.', SEGP_DOMAIN) . $cta . '</div>';
   }
   private function canView(): bool
   {

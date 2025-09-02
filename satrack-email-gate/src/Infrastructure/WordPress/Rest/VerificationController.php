@@ -39,17 +39,18 @@ class VerificationController
       case '-':
         $expected = $a - $b;
         break;
-      case '*':
+      case 'x':
+      case 'X':
         $expected = $a * $b;
         break;
       case '+':
         $expected = $a + $b;
         break;
       default:
-        return new WP_Error('segp_captcha', __('Captcha incorrecto', 'satrack-egp'), ['status' => 403]);
+        return new WP_Error('segp_captcha', __('Captcha incorrecto', SEGP_DOMAIN), ['status' => 403]);
     }
     if ($captcha !== $expected) {
-      return new WP_Error('segp_captcha', __('Captcha incorrecto', 'satrack-egp'), ['status' => 403]);
+      return new WP_Error('segp_captcha', __('Captcha incorrecto', SEGP_DOMAIN), ['status' => 403]);
     }
     $email = $req->get_param('email');
 

@@ -88,6 +88,7 @@ add_action('plugins_loaded', function () {
   $c->set(WpLogger::class, $log);
   $c->set(TokenSigner::class, $signer);
   $c->set(AccessCookieManager::class, $cookie);
+  add_action('wp_logout', [$cookie, 'clear']);
   $c->set(RateLimiter::class, $rate);
 
   $accessLog = new AccessLogger();

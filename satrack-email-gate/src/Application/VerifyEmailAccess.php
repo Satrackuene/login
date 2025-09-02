@@ -31,17 +31,17 @@ class VerifyEmailAccess
   {
     $email = sanitize_email($email);
     if (!is_email($email)) {
-      return [false, __('Correo inválido', 'satrack-egp')];
+      return [false, __('Correo inválido', SEGP_DOMAIN)];
     }
 
     $max = (int) ($this->config->get('rate', 10));
     if (!$this->rate->hit(max(3, $max))) {
-      return [false, __('Demasiados intentos, inténtalo más tarde.', 'satrack-egp')];
+      return [false, __('Demasiados intentos, inténtalo más tarde.', SEGP_DOMAIN)];
     }
 
     $token = (string) $this->config->get('token', '');
     if (!$token) {
-      return [false, __('Plugin no configurado.', 'satrack-egp')];
+      return [false, __('Plugin no configurado.', SEGP_DOMAIN)];
     }
 
     // Filtro opcional por dominios
@@ -56,7 +56,7 @@ class VerifyEmailAccess
         }
       }
       if (!$okDomain) {
-        return [false, __('Dominio de correo no permitido.', 'satrack-egp')];
+        return [false, __('Dominio de correo no permitido.', SEGP_DOMAIN)];
       }
     }
 
@@ -76,7 +76,7 @@ class VerifyEmailAccess
     $ip = $_SERVER['REMOTE_ADDR'] ?? '';
     if (!$allowed) {
       $this->log->info('Access denied', ['email' => $email, 'ip' => $ip]);
-      return [false, __('Tu correo no está autorizado para este contenido.', 'satrack-egp'), $allowed];
+      return [false, __('Tu correo no está autorizado para este contenido.', SEGP_DOMAIN), $allowed];
     }
 
     $ttl = (int) $this->config->get('cookie_ttl', 24);
@@ -92,7 +92,7 @@ class VerifyEmailAccess
     }
     $this->log->info('Access granted', ['email' => $email, 'ip' => $ip, 'session_hours' => max(1, $ttl)]);
 
-    return [true, __('Acceso concedido', 'satrack-egp'), $allowed];
+    return [true, __('Acceso concedido', SEGP_DOMAIN), $allowed];
   }
 
   private function loginVisitor(string $email): void
